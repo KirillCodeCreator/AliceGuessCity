@@ -34,6 +34,12 @@ def main():
 
 def handle_dialog(res, req):
     user_id = req['session']['user_id']
+
+    res["response"]["buttons"] = [{"title": "Помощь", "hide": True}]
+
+    if help_needed(res, req):
+        return
+
     if req['session']['new']:
         res['response']['text'] = 'Привет! Назови своё имя!'
         sessionStorage[user_id] = {
@@ -169,6 +175,15 @@ def get_first_name(req):
             # Если есть сущность с ключом 'first_name', то возвращаем её значение.
             # Во всех остальных случаях возвращаем None.
             return entity['value'].get('first_name', None)
+
+
+def help_needed(req, res):
+    if req["request"]["original_utterance"] == "Помощь":
+        res["response"][
+            "text"
+        ] = "Эта игра про угадывание города! Алиса спрашивает имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
+        res["response"]["end_session"] = True
+        return True
 
 
 if __name__ == '__main__':
