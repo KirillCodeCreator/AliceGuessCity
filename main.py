@@ -35,17 +35,17 @@ def main():
 def handle_dialog(res, req):
     user_id = req['session']['user_id']
 
-    res["response"]["buttons"] = [{"title": "Помощь", "hide": True}]
-
-    if help_needed(res, req):
-        return
-
     if req['session']['new']:
         res['response']['text'] = 'Привет! Назови своё имя!'
         sessionStorage[user_id] = {
             'first_name': None,  # здесь будет храниться имя
             'game_started': False  # здесь информация о том, что пользователь начал игру. По умолчанию False
         }
+        return
+
+    res["response"]["buttons"] = [{"title": "Помощь", "hide": True}]
+
+    if help_needed(res, req):
         return
 
     if sessionStorage[user_id]['first_name'] is None:
