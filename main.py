@@ -37,7 +37,7 @@ def handle_dialog(res, req):
 
     res["response"]["buttons"] = [{"title": "Помощь", "hide": True}]
 
-    if help_needed(res, req):
+    if help_needed(req, res):
         return
 
     if req['session']['new']:
@@ -178,7 +178,7 @@ def get_first_name(req):
 
 
 def help_needed(req, res):
-    if res['request']['original_utterance'] == 'Помощь':
+    if req['request']['original_utterance'] == 'Помощь':
         res["response"][
             "text"
         ] = "Эта игра про угадывание города! Алиса спрашивает  имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
