@@ -178,7 +178,7 @@ def get_first_name(req):
 
 
 def help_needed(req, res):
-    if req["request"]["original_utterance"] == "Помощь":
+    if 'Помощь' in req['request']['nlu']['tokens']:
         res["response"][
             "text"
         ] = "Эта игра про угадывание города! Алиса спрашивает  имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
