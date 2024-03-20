@@ -38,6 +38,9 @@ def handle_dialog(res, req):
     if help_needed(req, res):
         return
 
+    if url_redirect(req, res):
+        return
+
     if req['session']['new']:
         res['response']['text'] = 'Привет! Назови своё имя!'
         res["response"]["buttons"] = [{"title": "Помощь", "hide": True}]
@@ -213,6 +216,11 @@ def help_needed(req, res):
         res["response"][
             "text"
         ] = "Эта игра про угадывание города! Алиса спрашивает  имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
+        return True
+
+
+def url_redirect(req, res):
+    if req['request']['original_utterance'] == 'Покажи город на карте':
         return True
 
 
