@@ -221,6 +221,9 @@ def help_needed(req, res):
 
 def url_redirect(req, res):
     if req['request']['original_utterance'] == 'Покажи город на карте':
+        res["response"][
+            "text"
+        ] = ""
         return True
 
 
