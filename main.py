@@ -223,7 +223,18 @@ def url_redirect(req, res):
     if req['request']['original_utterance'] == 'Покажи город на карте':
         res["response"][
             "text"
-        ] = ""
+        ] = "Рада, что ты вернулся! Продолжаем?"
+        res['response']['buttons'] = [
+            {
+                'title': 'Да',
+                'hide': True
+            },
+            {
+                'title': 'Нет',
+                'hide': True
+            },
+            {"title": "Помощь", "hide": True}
+        ]
         return True
 
 
