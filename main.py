@@ -96,6 +96,7 @@ def handle_dialog(res, req):
                     sessionStorage[user_id]['game_started'] = True
                     # номер попытки, чтобы показывать фото по порядку
                     sessionStorage[user_id]['attempt'] = 1
+                    sessionStorage[user_id]['countryattempt'] = 1
                     # функция, которая выбирает город для игры и показывает фото
                     play_game(res, req)
             elif 'нет' in req['request']['nlu']['tokens']:
@@ -121,6 +122,7 @@ def handle_dialog(res, req):
 def play_game(res, req):
     user_id = req['session']['user_id']
     attempt = sessionStorage[user_id]['attempt']
+    countryattempt = sessionStorage[user_id]['countryattempt']
     if attempt == 1:
         # если попытка первая, то случайным образом выбираем город для гадания
         city = random.choice(list(cities))
@@ -129,7 +131,7 @@ def play_game(res, req):
             city = random.choice(list(cities))
         # записываем город в информацию о пользователе
         sessionStorage[user_id]['city'] = city
-        sessionStorage[user_id]['country'] = cities[city]
+        sessionStorage[user_id]['country'] = coutries[city]
         # добавляем в ответ картинку
         res['response']['card'] = {}
         res['response']['card']['type'] = 'BigImage'
@@ -140,34 +142,53 @@ def play_game(res, req):
     else:
         # сюда попадаем, если попытка отгадать не первая
         city = sessionStorage[user_id]['city']
-        country = sessionStorage[user_id]['country']
+        countries = sessionStorage[user_id]['country']
         # проверяем есть ли правильный ответ в сообщение
-        if get_country(req) == country:
-            citylist = sessionStorage[user_id]['guessed_cities']
-            curcity = citylist[len(citylist) - 1]
-            # если да, то добавляем город к sessionStorage[user_id]['guessed_cities'] и
-            # отправляем пользователя на второй круг. Обратите внимание на этот шаг на схеме.
-            res['response']['text'] = 'Правильно! Сыграем ещё?'
-            res['response']['buttons'] = [
-                {
-                    'title': 'Да',
-                    'hide': True
-                },
-                {
-                    'title': 'Нет',
-                    'hide': True
-                },
-                {
-                    "title": "Покажи город на карте",
-                    "url": f"https://yandex.ru/maps/?mode=search&text={curcity}",
-                    "hide": True
-                }
-            ]
-            sessionStorage[user_id]['game_started'] = False
-            return
+        if has_city_answer(user_id, city):
+            if get_country(req) in countries:
+                res['response']['text'] = 'Правильно! Сыграем ещё?'
+                res['response']['buttons'] = [
+                    {
+                        'title': 'Да',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Нет',
+                        'hide': True
+                    },
+                    {
+                        "title": "Покажи город на карте",
+                        "url": f"https://yandex.ru/maps/?mode=search&text={city}",
+                        "hide": True
+                    }
+                ]
+                sessionStorage[user_id]['game_started'] = False
+                return
+            elif countryattempt == 3:
+                # если попытка третья, то значит, что все картинки мы показали.
+                # В этом случае говорим ответ пользователю,
+                # Обратите внимание на этот шаг на схеме.
+                res['response']['text'] = f'Вы пытались. Это {countries[0]}. Сыграем ещё?'
+                res['response']['buttons'] = [
+                    {
+                        'title': 'Да',
+                        'hide': True
+                    },
+                    {
+                        'title': 'Нет',
+                        'hide': True
+                    },
+                    {"title": "Помощь", "hide": True}
+                ]
+                sessionStorage[user_id]['game_started'] = False
+                return
+            else:
+                sessionStorage[user_id]['countryattempt'] += 1
+                res['response']['text'] = 'А вот и не угадал! Попробуй еще раз'
+                return
         elif get_city(req) == city: # если да, то добавляем город к sessionStorage[user_id]['guessed_cities'] и
             sessionStorage[user_id]['guessed_cities'].append(city)
-            sessionStorage[user_id]['game_started'] = False
+            sessionStorage[user_id]['game_started'] = True
             # отправляем пользователя на второй круг. Обратите внимание на этот шаг на схеме.
             res['response']['text'] = 'Правильно! А в какой стране этот город?'
             return
@@ -176,7 +197,6 @@ def play_game(res, req):
             if attempt == 3:
                 # если попытка третья, то значит, что все картинки мы показали.
                 # В этом случае говорим ответ пользователю,
-                # добавляем город к sessionStorage[user_id]['guessed_cities'] и отправляем его на второй круг.
                 # Обратите внимание на этот шаг на схеме.
                 res['response']['text'] = f'Вы пытались. Это {city.title()}. Сыграем ещё?'
                 res['response']['buttons'] = [
@@ -238,6 +258,12 @@ def help_needed(req, res):
         ] = "Эта игра про угадывание города! Алиса спрашивает  имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
         return True
 
+def has_needed(req, res):
+    if req['request']['original_utterance'] == 'Помощь':
+        res["response"][
+            "text"
+        ] = "Эта игра про угадывание города! Алиса спрашивает  имя пользователя и просит ввести город, картинка которого впоследствии будет выведена пользователю!"
+        return True
 
 def url_redirect(req, res):
     if req['request']['original_utterance'] == 'Покажи город на карте':
@@ -256,6 +282,9 @@ def url_redirect(req, res):
             {"title": "Помощь", "hide": True}
         ]
         return True
+
+def has_city_answer(user_id, city):
+    return city in sessionStorage[user_id]['guessed_cities']
 
 
 if __name__ == '__main__':
